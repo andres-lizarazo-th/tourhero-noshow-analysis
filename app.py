@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 from gspread_dataframe import get_as_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
+import numpy as np
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -34,8 +35,13 @@ def preprocess_data(df):
         return df
     if 'TimeZones Dif vs COT' in df.columns:
         df['TimeZones Dif vs COT'] = pd.to_numeric(df['TimeZones Dif vs COT'], errors='coerce')
+    
+    # Create the short, 4-digit batch ID for easier filtering and display
     if 'batch_id' in df.columns:
         df['batch_id'] = pd.to_numeric(df['batch_id'], errors='coerce')
+        # Create a temporary series of strings, slice, and assign back
+        df['short_batch_id'] = df['batch_id'].dropna().astype(np.int64).astype(str).str[3:7]
+
     return df
 
 # --- STREAMLIT INTERFACE ---
@@ -57,31 +63,42 @@ else:
 
         # --- SIDEBAR FILTERS ---
         
-        # DEFINITIVE BATCH ID FILTER using st.select_slider
+        # BATCH ID FILTER using short IDs
         with st.sidebar.expander("Select Batch IDs", expanded=True):
-            sorted_batches = sorted([int(b) for b in df['batch_id'].dropna().unique()])
-            
-            if not sorted_batches:
-                st.warning("No valid Batch IDs found.")
-                selected_batch_range = None
+            if 'short_batch_id' in df.columns:
+                sorted_short_batches = sorted(df['short_batch_id'].dropna().unique())
+                
+                if not sorted_short_batches:
+                    st.warning("No valid Batch IDs found.")
+                    selected_batch_range = None
+                else:
+                    # This slider snaps to actual existing short batch IDs
+                    selected_batch_range = st.select_slider(
+                        'Filter by Short Batch ID Range',
+                        options=sorted_short_batches,
+                        value=(sorted_short_batches[0], sorted_short_batches[-1])
+                    )
             else:
-                # This slider snaps to actual existing batch IDs
-                selected_batch_range = st.select_slider(
-                    'Filter by Batch ID Range',
-                    options=sorted_batches,
-                    value=(sorted_batches[0], sorted_batches[-1]) # Default to the full range
-                )
+                st.warning("Batch ID column not found.")
+                selected_batch_range = None
 
         # Filter by time granularity
         time_granularity = st.sidebar.radio("Select time block granularity", ('30 minutes', '2 hours'))
 
-        # Filter by timezone difference
+        # TIMEZONE SLIDER with 0.5 steps
         clean_tz = df['TimeZones Dif vs COT'].dropna()
         if not clean_tz.empty:
             min_tz, max_tz = float(clean_tz.min()), float(clean_tz.max())
+            # Round min/max to the nearest 0.5 for a cleaner slider
+            min_tz_rounded = np.floor(min_tz * 2) / 2
+            max_tz_rounded = np.ceil(max_tz * 2) / 2
+            
             selected_tz_range = st.sidebar.slider(
                 'Filter by Timezone Difference vs COT',
-                min_value=min_tz, max_value=max_tz, value=(min_tz, max_tz)
+                min_value=min_tz_rounded,
+                max_value=max_tz_rounded,
+                value=(min_tz_rounded, max_tz_rounded),
+                step=0.5 # Set the step to 0.5
             )
         else:
             selected_tz_range = (0, 0)
@@ -94,8 +111,8 @@ else:
         df_filtered = df.copy()
         
         if selected_batch_range:
-            df_filtered = df_filtered[df_filtered['batch_id'].between(selected_batch_range[0], selected_batch_range[1])]
-        else: # If no batch range is selected (e.g., no batches found), show an empty dataframe
+            df_filtered = df_filtered[df_filtered['short_batch_id'].between(selected_batch_range[0], selected_batch_range[1])]
+        else:
             df_filtered = pd.DataFrame(columns=df.columns)
 
         if selected_tz_range != (0, 0):
