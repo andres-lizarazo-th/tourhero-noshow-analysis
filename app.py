@@ -90,7 +90,7 @@ st.title("📊 Attendance Analysis Dashboard")
 
 # --- HARDCODED GOOGLE SHEET CONFIGURATION ---
 # IMPORTANT: Replace the URL and Sheet Name with your own.
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU/edit?gid=0#gid=0"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbvv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU" 
 SHEET_NAME = "Sheet1" 
 
 # Check if the placeholder URL is still there
