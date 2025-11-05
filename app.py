@@ -57,20 +57,36 @@ else:
 
         # --- SIDEBAR FILTERS ---
         
-        # NEW: Filter by Batch ID using individual checkboxes
+        # DEFINITIVE BATCH ID FILTER with Select All / Clear buttons
         with st.sidebar.expander("Select Batch IDs", expanded=True):
             sorted_batches = sorted([int(b) for b in df['batch_id'].dropna().unique()])
             
-            # We build the list of selected batches from the checkboxes that are ticked
-            selected_batches = []
-            if not sorted_batches:
-                 st.warning("No valid Batch IDs found.")
-            else:
-                for batch in sorted_batches:
-                    # Each checkbox needs a unique key. Default to True (checked).
-                    if st.checkbox(str(batch), value=True, key=f"batch_{batch}"):
-                        selected_batches.append(batch)
-        
+            # Initialize session state for the multiselect
+            if 'selected_batches' not in st.session_state:
+                st.session_state.selected_batches = sorted_batches
+
+            # Define callbacks for buttons
+            def select_all():
+                st.session_state.selected_batches = sorted_batches
+            
+            def clear_all():
+                st.session_state.selected_batches = []
+
+            # Display buttons side-by-side
+            col1, col2 = st.columns(2)
+            with col1:
+                st.button("Select All", on_click=select_all, use_container_width=True)
+            with col2:
+                st.button("Clear Selection", on_click=clear_all, use_container_width=True)
+            
+            # The multiselect widget now uses the session state
+            selected_batches = st.multiselect(
+                "Select batches from the list below",
+                options=sorted_batches,
+                default=st.session_state.selected_batches,
+                key='selected_batches' # Connect the widget to the session state key
+            )
+
         # Filter by time granularity
         time_granularity = st.sidebar.radio("Select time block granularity", ('30 minutes', '2 hours'))
 
@@ -93,7 +109,7 @@ else:
         df_filtered = df.copy()
         if selected_batches:
             df_filtered = df_filtered[df_filtered['batch_id'].isin(selected_batches)]
-        else: # If no batch is selected, show an empty dataframe
+        else: 
             df_filtered = pd.DataFrame(columns=df.columns)
 
         if selected_tz_range != (0, 0):
