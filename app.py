@@ -32,7 +32,6 @@ def load_data_from_gsheets(sheet_url, sheet_name):
 def preprocess_data(df):
     if df.empty:
         return df
-    # Convert relevant columns to numeric where possible
     if 'TimeZones Dif vs COT' in df.columns:
         df['TimeZones Dif vs COT'] = pd.to_numeric(df['TimeZones Dif vs COT'], errors='coerce')
     if 'batch_id' in df.columns:
@@ -58,21 +57,20 @@ else:
 
         # --- SIDEBAR FILTERS ---
         
-        # NEW: Filter by Batch ID using a collapsible multi-select box
+        # NEW: Filter by Batch ID using individual checkboxes
         with st.sidebar.expander("Select Batch IDs", expanded=True):
-            clean_batches = df['batch_id'].dropna().unique()
-            if len(clean_batches) > 0:
-                sorted_batches = sorted([int(b) for b in clean_batches])
-                selected_batches = st.multiselect(
-                    "Batches",
-                    options=sorted_batches,
-                    default=sorted_batches,
-                    label_visibility="collapsed"
-                )
+            sorted_batches = sorted([int(b) for b in df['batch_id'].dropna().unique()])
+            
+            # We build the list of selected batches from the checkboxes that are ticked
+            selected_batches = []
+            if not sorted_batches:
+                 st.warning("No valid Batch IDs found.")
             else:
-                selected_batches = []
-                st.warning("No valid Batch IDs found.")
-
+                for batch in sorted_batches:
+                    # Each checkbox needs a unique key. Default to True (checked).
+                    if st.checkbox(str(batch), value=True, key=f"batch_{batch}"):
+                        selected_batches.append(batch)
+        
         # Filter by time granularity
         time_granularity = st.sidebar.radio("Select time block granularity", ('30 minutes', '2 hours'))
 
@@ -95,7 +93,9 @@ else:
         df_filtered = df.copy()
         if selected_batches:
             df_filtered = df_filtered[df_filtered['batch_id'].isin(selected_batches)]
-        
+        else: # If no batch is selected, show an empty dataframe
+            df_filtered = pd.DataFrame(columns=df.columns)
+
         if selected_tz_range != (0, 0):
             df_filtered = df_filtered[
                 (df_filtered['TimeZones Dif vs COT'].between(selected_tz_range[0], selected_tz_range[1])) |
@@ -112,8 +112,6 @@ else:
         if df_filtered.empty:
             st.warning("No data matches the selected filters.")
         else:
-            # REMOVED the st.success message as requested
-
             # --- EDA SECTION ---
             st.header("🔍 Exploratory Data Analysis (EDA)")
             col1, col2, col3 = st.columns(3)
