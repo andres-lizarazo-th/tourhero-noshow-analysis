@@ -134,62 +134,66 @@ else:
             st.warning("No data matches the selected filters.")
         else:
             # --- EDA SECTION ---
-            st.header("Distribution Analysis")
+# --- Nuevo código optimizado ---
+
+            # --- EDA SECTION ---
+            st.header("🔍 Exploratory Data Analysis (EDA)")
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Filtered Leads", f"{len(df_filtered):,}")
             col2.metric("Unique Batch IDs", df_filtered['batch_id'].nunique())
             if not df_filtered['TimeZones Dif vs COT'].dropna().empty:
                 col3.metric("Avg. Timezone Diff", f"{df_filtered['TimeZones Dif vs COT'].mean():.2f} hours")
-
-            # --- Nuevo código con porcentajes ---
-            st.subheader("Distribution of Statuses (1ST Call)")
             
-            # Calcula las cuentas y porcentajes
-            counts_1st = df_filtered['After 1ST status'].value_counts()
-            if not counts_1st.empty:
-                percentages_1st = 100 * counts_1st / counts_1st.sum()
+            # --- Helper function to create styled, transparent bar charts ---
+            def create_status_barchart(data_series, title):
+                """Creates a styled Matplotlib bar chart for Streamlit's dark theme."""
+                counts = data_series.dropna().value_counts()
+                if counts.empty:
+                    return None  # Return nothing if there's no data
             
-                # Crea la figura y los ejes para el gráfico
-                fig1, ax1 = plt.subplots()
-                bars1 = ax1.bar(counts_1st.index, counts_1st.values)
+                percentages = 100 * counts / counts.sum()
                 
-                # Añade las etiquetas de porcentaje encima de cada barra
-                ax1.bar_label(bars1, labels=[f'{p:.1f}%' for p in percentages_1st], padding=3)
+                # Create the plot
+                fig, ax = plt.subplots(figsize=(8, 4))
+                bars = ax.bar(counts.index, counts.values)
             
-                # Estilo y formato del gráfico
-                ax1.set_ylabel('Count of Leads')
-                ax1.tick_params(axis='x', rotation=45)
-                ax1.spines['top'].set_visible(False)
-                ax1.spines['right'].set_visible(False)
-                plt.tight_layout() # Ajusta el gráfico para que todo encaje bien
+                # Add percentage labels
+                ax.bar_label(bars, labels=[f'{p:.1f}%' for p in percentages], padding=3, color='white', fontsize=10)
             
-                # Muestra el gráfico en Streamlit
-                st.pyplot(fig1)
+                # --- Styling for Transparency and Dark Mode ---
+                fig.patch.set_alpha(0.0)
+                ax.patch.set_alpha(0.0)
+                
+                # Set text colors to white
+                ax.set_title(title, color='white')
+                ax.yaxis.label.set_color('white')
+                ax.tick_params(axis='x', colors='white', rotation=45)
+                ax.tick_params(axis='y', colors='white')
             
-                # --- Nuevo código con porcentajes ---
+                # Make axes lines visible but subtle
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.spines['bottom'].set_color('gray')
+                ax.spines['left'].set_color('gray')
+                
+                plt.tight_layout()
+                return fig
+            
+            # Create columns for the charts
+            eda_col1, eda_col2 = st.columns(2)
+            
+            with eda_col1:
+                st.subheader("Distribution of Statuses (1ST Call)")
+                fig1 = create_status_barchart(df_filtered['After 1ST status'], "1ST Call Status Distribution")
+                if fig1:
+                    st.pyplot(fig1, use_container_width=True)
+            
+            with eda_col2:
                 st.subheader("Distribution of Statuses (RCP Call)")
-                
-                # Calcula las cuentas y porcentajes
-                counts_rcp = df_filtered['After RCP Status'].value_counts()
-                if not counts_rcp.empty:
-                    percentages_rcp = 100 * counts_rcp / counts_rcp.sum()
-                
-                    # Crea la figura y los ejes para el gráfico
-                    fig2, ax2 = plt.subplots()
-                    bars2 = ax2.bar(counts_rcp.index, counts_rcp.values)
-                
-                    # Añade las etiquetas de porcentaje encima de cada barra
-                    ax2.bar_label(bars2, labels=[f'{p:.1f}%' for p in percentages_rcp], padding=3)
-                    
-                    # Estilo y formato del gráfico
-                    ax2.set_ylabel('Count of Leads')
-                    ax2.tick_params(axis='x', rotation=45)
-                    ax2.spines['top'].set_visible(False)
-                    ax2.spines['right'].set_visible(False)
-                    plt.tight_layout() # Ajusta el gráfico para que todo encaje bien
-                
-                    # Muestra el gráfico en Streamlit
-                    st.pyplot(fig2)
+                fig2 = create_status_barchart(df_filtered['After RCP Status'], "RCP Call Status Distribution")
+                if fig2:
+                    st.pyplot(fig2, use_container_width=True)
+
             
             # --- MAIN ANALYSIS ---
             st.header("📈 Time Blocks vs After Call Status")
