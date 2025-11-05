@@ -57,17 +57,15 @@ else:
 
         # --- SIDEBAR FILTERS ---
         
-        # DEFINITIVE BATCH ID FILTER with Select All / Clear buttons
-        # --- Nuevo código (con el slider que se ajusta a los puntos) ---
-        
+        # DEFINITIVE BATCH ID FILTER using st.select_slider
         with st.sidebar.expander("Select Batch IDs", expanded=True):
             sorted_batches = sorted([int(b) for b in df['batch_id'].dropna().unique()])
             
             if not sorted_batches:
                 st.warning("No valid Batch IDs found.")
-                selected_batch_range = None # No range can be selected
+                selected_batch_range = None
             else:
-                # Use st.select_slider to create a range slider that snaps to actual batch IDs
+                # This slider snaps to actual existing batch IDs
                 selected_batch_range = st.select_slider(
                     'Filter by Batch ID Range',
                     options=sorted_batches,
@@ -94,9 +92,10 @@ else:
 
         # --- APPLYING FILTERS ---
         df_filtered = df.copy()
-        if selected_batches:
-            df_filtered = df_filtered[df_filtered['batch_id'].isin(selected_batches)]
-        else: 
+        
+        if selected_batch_range:
+            df_filtered = df_filtered[df_filtered['batch_id'].between(selected_batch_range[0], selected_batch_range[1])]
+        else: # If no batch range is selected (e.g., no batches found), show an empty dataframe
             df_filtered = pd.DataFrame(columns=df.columns)
 
         if selected_tz_range != (0, 0):
