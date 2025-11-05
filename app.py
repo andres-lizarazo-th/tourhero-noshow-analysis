@@ -45,7 +45,7 @@ def preprocess_data(df):
     return df
 
 # --- STREAMLIT INTERFACE ---
-st.title("Attendance vs batches Analysis. /n COT TimeBlocks for 1st Calls and RCP. TimeZones Analysis for RCP")
+st.title("Attendance vs Batches Analysis. TimeBlocks for 1st and TimeZones Analysis for RCP")
 
 # --- HARDCODED GOOGLE SHEET CONFIGURATION ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbvv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU"
@@ -132,7 +132,7 @@ else:
             st.warning("No data matches the selected filters.")
         else:
             # --- EDA SECTION ---
-            st.header("🔍 Exploratory Data Analysis (EDA)")
+            st.header("Distribution Analysis")
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Filtered Leads", f"{len(df_filtered):,}")
             col2.metric("Unique Batch IDs", df_filtered['batch_id'].nunique())
