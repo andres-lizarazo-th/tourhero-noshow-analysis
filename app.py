@@ -58,34 +58,21 @@ else:
         # --- SIDEBAR FILTERS ---
         
         # DEFINITIVE BATCH ID FILTER with Select All / Clear buttons
+        # --- Nuevo código (con el slider que se ajusta a los puntos) ---
+        
         with st.sidebar.expander("Select Batch IDs", expanded=True):
             sorted_batches = sorted([int(b) for b in df['batch_id'].dropna().unique()])
             
-            # Initialize session state for the multiselect
-            if 'selected_batches' not in st.session_state:
-                st.session_state.selected_batches = sorted_batches
-
-            # Define callbacks for buttons
-            def select_all():
-                st.session_state.selected_batches = sorted_batches
-            
-            def clear_all():
-                st.session_state.selected_batches = []
-
-            # Display buttons side-by-side
-            col1, col2 = st.columns(2)
-            with col1:
-                st.button("Select All", on_click=select_all, use_container_width=True)
-            with col2:
-                st.button("Clear Selection", on_click=clear_all, use_container_width=True)
-            
-            # The multiselect widget now uses the session state
-            selected_batches = st.multiselect(
-                "Select batches from the list below",
-                options=sorted_batches,
-                default=st.session_state.selected_batches,
-                key='selected_batches' # Connect the widget to the session state key
-            )
+            if not sorted_batches:
+                st.warning("No valid Batch IDs found.")
+                selected_batch_range = None # No range can be selected
+            else:
+                # Use st.select_slider to create a range slider that snaps to actual batch IDs
+                selected_batch_range = st.select_slider(
+                    'Filter by Batch ID Range',
+                    options=sorted_batches,
+                    value=(sorted_batches[0], sorted_batches[-1]) # Default to the full range
+                )
 
         # Filter by time granularity
         time_granularity = st.sidebar.radio("Select time block granularity", ('30 minutes', '2 hours'))
