@@ -96,7 +96,7 @@ else:
             max_tz_rounded = np.ceil(max_tz * 2) / 2
             
             selected_tz_range = st.sidebar.slider(
-                'Filter by Timezone Difference vs COT',
+                'For RCP: Filter by Timezone Difference vs COT',
                 min_value=min_tz_rounded,
                 max_value=max_tz_rounded,
                 value=(min_tz_rounded, max_tz_rounded),
