@@ -45,7 +45,7 @@ def preprocess_data(df):
     return df
 
 # --- STREAMLIT INTERFACE ---
-st.title("Attendance vs Batches Analysis. TimeBlocks for 1st and TimeZones Analysis for RCP")
+st.title("Attendance vs Batches Analysis. TimeBlocks for 1st Calls and TimeZones Analysis for RCP")
 
 # --- HARDCODED GOOGLE SHEET CONFIGURATION ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbvv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU"
