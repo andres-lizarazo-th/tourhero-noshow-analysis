@@ -53,7 +53,7 @@ def preprocess_data(df):
 st.title("📊 Attendance Analysis Dashboard")
 
 # --- HARDCODED GOOGLE SHEET CONFIGURATION ---
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU" # Paste your clean URL here
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbvv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU" # Paste your clean URL here
 SHEET_NAME = "Sheet1" 
 
 if "YOUR_GOOGLE_SHEET_URL_HERE" in SHEET_URL:
