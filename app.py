@@ -43,8 +43,8 @@ def preprocess_data(df):
 st.title("📊 Attendance Analysis Dashboard")
 
 # --- HARDCODED GOOGLE SHEET CONFIGURATION ---
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbvv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU" # Paste your clean URL here
-SHEET_NAME = "Sheet1" 
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1PykSb5ZNTmtbvv8oIrCAiJIGdBZ1PyYgwFU4U9p9YBU"
+SHEET_NAME = "Sheet1"
 
 if "YOUR_GOOGLE_SHEET_URL_HERE" in SHEET_URL:
     st.info("👋 Welcome! Please update the `SHEET_URL` variable in the `app.py` script with your Google Sheets URL.")
@@ -58,19 +58,20 @@ else:
 
         # --- SIDEBAR FILTERS ---
         
-        # Filter by Batch ID Range
-        clean_batches = df['batch_id'].dropna()
-        if not clean_batches.empty:
-            min_batch, max_batch = int(clean_batches.min()), int(clean_batches.max())
-            selected_batch_range = st.sidebar.slider(
-                'Filter by Batch ID Range',
-                min_value=min_batch,
-                max_value=max_batch,
-                value=(min_batch, max_batch)
-            )
-        else:
-            selected_batch_range = (0, 0)
-            st.sidebar.warning("No valid Batch IDs found to create a filter.")
+        # NEW: Filter by Batch ID using a collapsible multi-select box
+        with st.sidebar.expander("Select Batch IDs", expanded=True):
+            clean_batches = df['batch_id'].dropna().unique()
+            if len(clean_batches) > 0:
+                sorted_batches = sorted([int(b) for b in clean_batches])
+                selected_batches = st.multiselect(
+                    "Batches",
+                    options=sorted_batches,
+                    default=sorted_batches,
+                    label_visibility="collapsed"
+                )
+            else:
+                selected_batches = []
+                st.warning("No valid Batch IDs found.")
 
         # Filter by time granularity
         time_granularity = st.sidebar.radio("Select time block granularity", ('30 minutes', '2 hours'))
@@ -92,8 +93,8 @@ else:
 
         # --- APPLYING FILTERS ---
         df_filtered = df.copy()
-        if selected_batch_range != (0, 0):
-            df_filtered = df_filtered[df_filtered['batch_id'].between(selected_batch_range[0], selected_batch_range[1])]
+        if selected_batches:
+            df_filtered = df_filtered[df_filtered['batch_id'].isin(selected_batches)]
         
         if selected_tz_range != (0, 0):
             df_filtered = df_filtered[
@@ -111,9 +112,9 @@ else:
         if df_filtered.empty:
             st.warning("No data matches the selected filters.")
         else:
-            st.success(f"Displaying {len(df_filtered)} records after applying filters.")
+            # REMOVED the st.success message as requested
 
-            # --- NEW EDA SECTION ---
+            # --- EDA SECTION ---
             st.header("🔍 Exploratory Data Analysis (EDA)")
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Filtered Leads", f"{len(df_filtered):,}")
@@ -172,7 +173,7 @@ else:
             else:
                 st.info("Not enough data for Analysis 1 with the current filters.")
 
-            # --- ANALYSIS 2: RCP Call (Homogenized) ---
+            # --- ANALYSIS 2: RCP Call ---
             st.subheader(f"Analysis 2: {time_granularity} Blocks vs. Status (RCP Call)")
             
             df_analysis_2 = df_filtered.dropna(subset=[col_block_rcp, 'After RCP Status'])
